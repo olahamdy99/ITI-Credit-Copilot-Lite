@@ -1,0 +1,38 @@
+version: "3.7"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: credit_copilot_app
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "8001:8000"
+    command: php artisan serve --host=0.0.0.0 --port=8000
+    depends_on:
+      - postgres
+    networks:
+      - credit_copilot_network
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: credit_copilot_postgres
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5434:5432"
+    volumes:
+      - credit_copilot_postgres_data:/var/lib/postgresql/data
+    networks:
+      - credit_copilot_network
+
+networks:
+  credit_copilot_network:
+
+volumes:
+  credit_copilot_postgres_data:
