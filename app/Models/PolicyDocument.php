@@ -46,4 +46,8 @@ class PolicyDocument extends Model
             'supersedes_document_id'
         );
     }
+    public function chunks(): HasMany
+    {
+        return $this->hasMany(PolicyChunk::class);
+    }
 }

@@ -34,4 +34,8 @@ class PolicyEdition extends Model
     {
         return $this->hasMany(Assessment::class);
     }
+    public function chunks(): HasMany
+    {
+        return $this->hasMany(PolicyChunk::class);
+    }
 }
