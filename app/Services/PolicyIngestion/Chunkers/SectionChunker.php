@@ -97,7 +97,7 @@ class SectionChunker implements DocumentChunker
         );
 
         if (! preg_match(
-            '/^(?<id>[A-Z]{2,4}-\d+(?:\.\d+)?)\.?\s+(?<title>.+)$/',
+            '/^(?<id>[A-Z]{1,4}-\d+(?:\.\d+)?)(?:\.?\s+(?<title>.+))?$/',
             $cleanLine,
             $matches
         )) {
@@ -105,7 +105,10 @@ class SectionChunker implements DocumentChunker
         }
 
         $id = $matches['id'];
-        $title = trim($matches['title']);
+
+        $title = isset($matches['title'])
+            ? trim($matches['title'])
+            : null;
 
         $isClause = str_contains($id, '.');
 
@@ -118,5 +121,13 @@ class SectionChunker implements DocumentChunker
 
             'title' => $title,
         ];
+    }
+    public function supports(string $format): bool
+    {
+        return in_array(
+            strtolower($format),
+            ['markdown', 'md', 'pdf'],
+            true
+        );
     }
 }
