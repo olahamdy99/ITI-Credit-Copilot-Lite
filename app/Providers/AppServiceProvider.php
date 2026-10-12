@@ -11,6 +11,8 @@ use App\Contracts\PolicyIngestion\DocumentChunker;
 use App\Services\PolicyIngestion\Chunkers\SectionChunker;
 use App\Services\PolicyIngestion\Chunkers\CsvRowChunker;
 use App\Services\PolicyIngestion\PolicyChunker;
+use App\Contracts\Embeddings\EmbeddingProvider;
+use App\Infrastructure\Embeddings\GeminiEmbeddingProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -64,6 +66,11 @@ class AppServiceProvider extends ServiceProvider
                     $app->tagged('policy.chunkers')
                 );
             }
+        );
+
+        $this->app->bind(
+            EmbeddingProvider::class,
+            GeminiEmbeddingProvider::class
         );
     }
     /**
