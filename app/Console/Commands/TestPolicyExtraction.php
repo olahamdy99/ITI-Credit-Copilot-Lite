@@ -22,34 +22,46 @@ class TestPolicyExtraction extends Command
     /**
      * Execute the console command.
      */
-    public function handle(
-        \App\Services\PolicyIngestion\PolicyTextExtractor $extractor
-    ): int {
-        $markdownPath = base_path(
-            'corpus/policy/product-sheet-personal-loan.md'
-        );
+    public function handle(\App\Services\PolicyIngestion\PolicyTextExtractor $extractor): int 
+    {
+        $documents = [
+            [
+                'path' => base_path(
+                    'corpus/policy/product-sheet-personal-loan.md'
+                ),
+                'format' => 'markdown',
+                'label' => 'Markdown',
+            ],
+            [
+                'path' => base_path(
+                    'corpus/policy/pricing-table.csv'
+                ),
+                'format' => 'csv',
+                'label' => 'CSV',
+            ],
+            [
+                'path' => base_path(
+                    'corpus/policy/credit-policy-2024.pdf'
+                ),
+                'format' => 'pdf',
+                'label' => 'PDF',
+            ],
+        ];
 
-        $csvPath = base_path(
-            'corpus/policy/pricing-table.csv'
-        );
+        foreach ($documents as $document) {
+            $this->info(
+                "Testing {$document['label']} extraction..."
+            );
 
-        $this->info('Testing Markdown extraction...');
-        $markdown = $extractor->extract(
-            $markdownPath,
-            'markdown'
-        );
+            $text = $extractor->extract(
+                $document['path'],
+                $document['format']
+            );
 
-        $this->line($markdown);
+            $this->line($text);
 
-        $this->newLine();
-
-        $this->info('Testing CSV extraction...');
-        $csv = $extractor->extract(
-            $csvPath,
-            'csv'
-        );
-
-        $this->line($csv);
+            $this->newLine();
+        }
 
         return self::SUCCESS;
     }
