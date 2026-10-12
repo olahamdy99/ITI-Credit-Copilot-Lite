@@ -7,6 +7,10 @@ use App\Services\PolicyIngestion\Extractors\CsvExtractor;
 use App\Services\PolicyIngestion\Extractors\MarkdownExtractor;
 use App\Services\PolicyIngestion\PolicyTextExtractor;
 use App\Services\PolicyIngestion\Extractors\PdfExtractor;
+use App\Contracts\PolicyIngestion\DocumentChunker;
+use App\Services\PolicyIngestion\Chunkers\SectionChunker;
+use App\Services\PolicyIngestion\Chunkers\CsvRowChunker;
+use App\Services\PolicyIngestion\PolicyChunker;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -15,6 +19,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Policy document extractors
+        |--------------------------------------------------------------------------
+        */
+
         $this->app->tag(
             [
                 MarkdownExtractor::class,
@@ -32,8 +42,30 @@ class AppServiceProvider extends ServiceProvider
                 );
             }
         );
-    }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Policy document chunkers
+        |--------------------------------------------------------------------------
+        */
+
+        $this->app->tag(
+            [
+                SectionChunker::class,
+                CsvRowChunker::class,
+            ],
+            'policy.chunkers'
+        );
+
+        $this->app->bind(
+            PolicyChunker::class,
+            function ($app) {
+                return new PolicyChunker(
+                    $app->tagged('policy.chunkers')
+                );
+            }
+        );
+    }
     /**
      * Bootstrap any application services.
      */
