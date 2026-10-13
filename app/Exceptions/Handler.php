@@ -2,7 +2,11 @@
 
 namespace App\Exceptions;
 
+use App\Exceptions\Approval\AuthorityLimitExceededException;
+use App\Exceptions\Approval\InvalidAssessmentStatusException;
+use App\Exceptions\Approval\UnauthorizedApproverException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\JsonResponse;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -25,6 +29,32 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+        $this->renderable(function (
+            AuthorityLimitExceededException $e
+        ): JsonResponse {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'AUTHORITY_LIMIT_EXCEEDED',
+            ], 403);
+        });
+
+        $this->renderable(function (
+            UnauthorizedApproverException $e
+        ): JsonResponse {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'UNAUTHORIZED_APPROVER',
+            ], 403);
+        });
+
+        $this->renderable(function (
+            InvalidAssessmentStatusException $e
+        ): JsonResponse {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'error' => 'INVALID_ASSESSMENT_STATUS',
+            ], 409);
         });
     }
 }

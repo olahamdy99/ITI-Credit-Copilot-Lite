@@ -18,3 +18,5 @@ yarn-error.log
 /.idea
 /.vscode
 .env.testing
+/storage/api-docs/
+/resources/views/vendor/l5-swagger/
