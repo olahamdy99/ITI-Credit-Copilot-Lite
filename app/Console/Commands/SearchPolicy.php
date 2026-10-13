@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+
+class SearchPolicy extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'policy:search
+    {query : Search query}
+    {date : Application date in Y-m-d format}
+    {--limit=5 : Maximum number of results}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Command description';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle(
+        \App\Services\PolicyRetrieval\PolicyRetrievalService $service
+    ): int {
+        $query = $this->argument('query');
+        $date = new \DateTimeImmutable(
+            $this->argument('date')
+        );
+
+        $limit = (int) $this->option('limit');
+
+        $results = $service->search(
+            query: $query,
+            applicationDate: $date,
+            policyEditionId: null,
+            limit: $limit,
+        );
+
+        if ($results === []) {
+            $this->warn('No policy results found.');
+
+            return self::SUCCESS;
+        }
+
+        foreach ($results as $index => $result) {
+            $this->line('----------------------------------------');
+            $this->line('Rank: ' . ($index + 1));
+            $this->line(
+                'Document: ' . $result['document_title']
+            );
+            $this->line(
+                'Section: ' . ($result['section_id'] ?? 'N/A')
+            );
+            $this->line(
+                'Clause: ' . ($result['clause_id'] ?? 'N/A')
+            );
+            $this->line(
+                'Similarity: ' .
+                round((float) $result['similarity'], 4)
+            );
+            $this->line('Content:');
+            $this->line($result['content']);
+            $this->newLine();
+        }
+
+        return self::SUCCESS;
+    }
+}

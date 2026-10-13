@@ -13,6 +13,8 @@ use App\Services\PolicyIngestion\Chunkers\CsvRowChunker;
 use App\Services\PolicyIngestion\PolicyChunker;
 use App\Contracts\Embeddings\EmbeddingProvider;
 use App\Infrastructure\Embeddings\GeminiEmbeddingProvider;
+use App\Contracts\PolicyRetrieval\PolicySearchRepository;
+use App\Infrastructure\PolicyRetrieval\PgVectorPolicySearchRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -71,6 +73,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             EmbeddingProvider::class,
             GeminiEmbeddingProvider::class
+        );
+
+        $this->app->bind(
+            PolicySearchRepository::class,
+            PgVectorPolicySearchRepository::class
         );
     }
     /**
