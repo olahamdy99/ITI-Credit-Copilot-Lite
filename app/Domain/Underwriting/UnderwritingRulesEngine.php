@@ -13,11 +13,15 @@ class UnderwritingRulesEngine
         float $monthlyInstallment,
         float $dbrPercentage,
         float $maxDbrPercentage,
+        float $minimumNetMonthlyIncome,
+        int $employmentMonths,
+        int $minimumEmploymentMonths,
         int $bureauScore,
         int $minimumBureauScore,
         float $ageAtMaturity,
         float $maximumAgeAtMaturity,
         int $requestedTenorMonths,
+        int $minimumTenorMonths,
         int $maximumTenorMonths,
         float $requestedAmount,
         float $minimumAmount,
@@ -25,9 +29,31 @@ class UnderwritingRulesEngine
     ): UnderwritingDecision {
         $rules = [];
 
+        /*
+         * Compare the exact DBR value.
+         * $dbrPercentage is kept for display/storage only.
+         */
+        $exactDbrPercentage = (
+            (
+                $existingMonthlyObligations
+                + $monthlyInstallment
+            )
+            / $netMonthlyIncome
+        ) * 100;
+
         $rules[] = $this->checkDbr(
-            $dbrPercentage,
+            $exactDbrPercentage,
             $maxDbrPercentage
+        );
+
+        $rules[] = $this->checkMinimumIncome(
+            $netMonthlyIncome,
+            $minimumNetMonthlyIncome
+        );
+
+        $rules[] = $this->checkEmploymentDuration(
+            $employmentMonths,
+            $minimumEmploymentMonths
         );
 
         $rules[] = $this->checkBureauScore(
@@ -42,6 +68,7 @@ class UnderwritingRulesEngine
 
         $rules[] = $this->checkTenor(
             $requestedTenorMonths,
+            $minimumTenorMonths,
             $maximumTenorMonths
         );
 
@@ -51,10 +78,8 @@ class UnderwritingRulesEngine
             $maximumAmount
         );
 
-        $decision = $this->resolveDecision($rules);
-
         return new UnderwritingDecision(
-            decision: $decision,
+            decision: $this->resolveDecision($rules),
             rules: $rules,
         );
     }
@@ -82,6 +107,60 @@ class UnderwritingRulesEngine
             details: [
                 'actual' => $actual,
                 'maximum' => $maximum,
+            ]
+        );
+    }
+
+    private function checkMinimumIncome(
+        float $actual,
+        float $minimum
+    ): RuleResult {
+        if ($actual < $minimum) {
+            return new RuleResult(
+                rule: 'minimum_income',
+                status: 'fail',
+                message: 'Net monthly income is below the policy minimum.',
+                details: [
+                    'actual' => $actual,
+                    'minimum' => $minimum,
+                ]
+            );
+        }
+
+        return new RuleResult(
+            rule: 'minimum_income',
+            status: 'pass',
+            message: 'Net monthly income meets the policy minimum.',
+            details: [
+                'actual' => $actual,
+                'minimum' => $minimum,
+            ]
+        );
+    }
+
+    private function checkEmploymentDuration(
+        int $actualMonths,
+        int $minimumMonths
+    ): RuleResult {
+        if ($actualMonths < $minimumMonths) {
+            return new RuleResult(
+                rule: 'employment_duration',
+                status: 'fail',
+                message: 'Employment duration is below the policy minimum.',
+                details: [
+                    'actual_months' => $actualMonths,
+                    'minimum_months' => $minimumMonths,
+                ]
+            );
+        }
+
+        return new RuleResult(
+            rule: 'employment_duration',
+            status: 'pass',
+            message: 'Employment duration meets the policy minimum.',
+            details: [
+                'actual_months' => $actualMonths,
+                'minimum_months' => $minimumMonths,
             ]
         );
     }
@@ -142,15 +221,17 @@ class UnderwritingRulesEngine
 
     private function checkTenor(
         int $actual,
+        int $minimum,
         int $maximum
     ): RuleResult {
-        if ($actual > $maximum) {
+        if ($actual < $minimum || $actual > $maximum) {
             return new RuleResult(
                 rule: 'tenor',
                 status: 'fail',
-                message: 'Requested tenor exceeds the permitted maximum.',
+                message: 'Requested tenor is outside the permitted product range.',
                 details: [
                     'actual' => $actual,
+                    'minimum' => $minimum,
                     'maximum' => $maximum,
                 ]
             );
@@ -159,9 +240,10 @@ class UnderwritingRulesEngine
         return new RuleResult(
             rule: 'tenor',
             status: 'pass',
-            message: 'Requested tenor is within the permitted maximum.',
+            message: 'Requested tenor is within the permitted product range.',
             details: [
                 'actual' => $actual,
+                'minimum' => $minimum,
                 'maximum' => $maximum,
             ]
         );
