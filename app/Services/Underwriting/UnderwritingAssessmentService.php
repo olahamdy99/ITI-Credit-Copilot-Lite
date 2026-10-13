@@ -19,6 +19,7 @@ class UnderwritingAssessmentService
         private LoanCalculator $loanCalculator,
         private UnderwritingRulesEngine $rulesEngine,
         private PricingRateResolver $pricingRateResolver,
+        private UnderwritingCitationResolver $citationResolver,
     ) {}
 
     public function assess(LoanApplication $application): Assessment
@@ -238,7 +239,10 @@ class UnderwritingAssessmentService
 
                     'result' => $rule->status,
                     'reason' => $rule->message,
-                    'citation' => null,
+                    'citation' => $this->citationResolver->resolve(
+                        ruleCode: $rule->rule,
+                        edition: $application->policyEdition,
+                    ),
                 ]);
             }
 
