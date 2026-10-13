@@ -15,6 +15,8 @@ use App\Contracts\Embeddings\EmbeddingProvider;
 use App\Infrastructure\Embeddings\GeminiEmbeddingProvider;
 use App\Contracts\PolicyRetrieval\PolicySearchRepository;
 use App\Infrastructure\PolicyRetrieval\PgVectorPolicySearchRepository;
+use App\Contracts\LLM\LanguageModelProvider;
+use App\Infrastructure\LLM\GeminiLanguageModelProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -78,6 +80,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             PolicySearchRepository::class,
             PgVectorPolicySearchRepository::class
+        );
+
+        $this->app->bind(
+            LanguageModelProvider::class,
+            GeminiLanguageModelProvider::class
         );
     }
     /**
