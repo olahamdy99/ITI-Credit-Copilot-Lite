@@ -36,6 +36,10 @@ return [
         'GEMINI_EMBEDDING_MODEL',
         'gemini-embedding-2'
     ),
+    'chat_model' => env(
+        'GEMINI_CHAT_MODEL',
+        'gemini-2.5-flash'
+    ),
 ],
 
 ];

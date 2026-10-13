@@ -5,6 +5,7 @@ namespace App\Infrastructure\PolicyRetrieval;
 use App\Contracts\PolicyRetrieval\PolicySearchRepository;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
+use App\DTOs\PolicyRetrieval\PolicySearchResult;
 
 class PgVectorPolicySearchRepository implements PolicySearchRepository
 {
@@ -75,7 +76,22 @@ class PgVectorPolicySearchRepository implements PolicySearchRepository
             )
             ->limit($limit)
             ->get()
-            ->map(fn ($row) => (array) $row)
+            ->map(
+                fn ($row) => new PolicySearchResult(
+                    chunkId: $row->id,
+                    policyDocumentId: $row->policy_document_id,
+                    policyEditionId: $row->policy_edition_id,
+                    documentTitle: $row->document_title,
+                    documentType: $row->document_type,
+                    sourceFile: $row->source_file,
+                    sectionId: $row->section_id,
+                    sectionTitle: $row->section_title,
+                    clauseId: $row->clause_id,
+                    pageNumber: $row->page_number,
+                    content: $row->content,
+                    similarity: (float) $row->similarity,
+                )
+            )
             ->all();
     }
 }
