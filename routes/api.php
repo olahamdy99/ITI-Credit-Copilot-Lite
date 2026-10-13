@@ -1,19 +1,68 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\ApprovalController;
+use App\Http\Controllers\Api\AssessmentController;
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\CreditMemoController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "api" middleware group. Make something great!
-|
-*/
+Route::post('/login', [
+    AuthController::class,
+    'login',
+]);
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', [
+        AuthController::class,
+        'me',
+    ]);
+
+    Route::post('/logout', [
+        AuthController::class,
+        'logout',
+    ]);
+
+    Route::post(
+        '/applications/{application}/assess',
+        [
+            AssessmentController::class,
+            'assess',
+        ]
+    )->middleware(
+        'role:loan_officer,credit_officer'
+    );
+
+    Route::post(
+        '/assessments/{assessment}/memo',
+        [
+            CreditMemoController::class,
+            'generate',
+        ]
+    )->middleware(
+        'role:loan_officer,credit_officer'
+    );
+
+    Route::post(
+        '/assessments/{assessment}/approve',
+        [
+            ApprovalController::class,
+            'approve',
+        ]
+    )->middleware('role:credit_officer');
+
+    Route::post(
+        '/assessments/{assessment}/reject',
+        [
+            ApprovalController::class,
+            'reject',
+        ]
+    )->middleware('role:credit_officer');
+
+    Route::post(
+        '/assessments/{assessment}/issue',
+        [
+            ApprovalController::class,
+            'issue',
+        ]
+    )->middleware('role:credit_officer');
 });
