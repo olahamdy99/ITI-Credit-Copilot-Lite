@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_DB: credit_copilot_test
+          POSTGRES_USER: credit_user
+          POSTGRES_PASSWORD: credit_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U credit_user -d credit_copilot_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: testing
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: credit_copilot_test
+      DB_USERNAME: credit_user
+      DB_PASSWORD: credit_password
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: pdo_pgsql, pgsql
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Enable pgvector
+        run: |
+          PGPASSWORD=credit_password psql \
+            -h 127.0.0.1 \
+            -U credit_user \
+            -d credit_copilot_test \
+            -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Run Pint
+        run: ./vendor/bin/pint --test
+
+      - name: Run tests
+        run: php artisan test
