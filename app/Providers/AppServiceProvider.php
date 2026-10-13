@@ -19,6 +19,8 @@ use App\Contracts\LLM\LanguageModelProvider;
 use App\Infrastructure\LLM\GeminiLanguageModelProvider;
 use App\Contracts\ApplicationProcessing\ApplicationPackExtractor;
 use App\Infrastructure\ApplicationProcessing\PdfApplicationPackExtractor;
+use App\Contracts\ApplicationProcessing\ApplicationDataExtractor;
+use App\Services\ApplicationProcessing\LlmApplicationDataExtractor;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -92,6 +94,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             ApplicationPackExtractor::class,
             PdfApplicationPackExtractor::class
+        );
+        
+        $this->app->bind(
+            ApplicationDataExtractor::class,
+            LlmApplicationDataExtractor::class
         );
     }
     /**
