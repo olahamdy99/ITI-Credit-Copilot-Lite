@@ -4,6 +4,7 @@ namespace App\Infrastructure\LLM;
 
 use App\Contracts\LLM\LanguageModelProvider;
 use App\Exceptions\PolicyQA\GroundedAnswerGenerationException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 
 class GeminiLanguageModelProvider implements LanguageModelProvider
@@ -31,7 +32,26 @@ class GeminiLanguageModelProvider implements LanguageModelProvider
             'x-goog-api-key' => $apiKey,
             'Content-Type' => 'application/json',
         ])
-            ->timeout(30)
+            ->connectTimeout(10)
+            ->timeout(90)
+            ->retry(
+                3,
+                2000,
+                function ($exception) {
+                    if (! $exception instanceof RequestException) {
+                        return false;
+                    }
+
+                    $status = $exception->response?->status();
+
+                    return in_array(
+                        $status,
+                        [429, 500, 502, 503, 504],
+                        true
+                    );
+                },
+                throw: false
+            )
             ->post(
                 "https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent",
                 [
