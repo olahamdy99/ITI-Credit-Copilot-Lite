@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Exceptions\PolicyRetrieval\InsufficientPolicyEvidenceException;
 
 class SearchPolicy extends Command
 {
@@ -36,12 +37,20 @@ class SearchPolicy extends Command
 
         $limit = (int) $this->option('limit');
 
+    try {
         $results = $service->search(
             query: $query,
             applicationDate: $date,
             policyEditionId: null,
             limit: $limit,
         );
+    } catch (InsufficientPolicyEvidenceException $exception) {
+        $this->warn(
+            'Insufficient policy evidence to answer this question.'
+        );
+
+        return self::SUCCESS;
+    }
 
         if ($results === []) {
             $this->warn('No policy results found.');
@@ -53,20 +62,20 @@ class SearchPolicy extends Command
             $this->line('----------------------------------------');
             $this->line('Rank: ' . ($index + 1));
             $this->line(
-                'Document: ' . $result['document_title']
+                'Document: ' . $result->documentTitle
             );
             $this->line(
-                'Section: ' . ($result['section_id'] ?? 'N/A')
+                'Section: ' . ($result->sectionId?? 'N/A')
             );
             $this->line(
-                'Clause: ' . ($result['clause_id'] ?? 'N/A')
+                'Clause: ' . ($result->clauseId ?? 'N/A')
             );
             $this->line(
                 'Similarity: ' .
-                round((float) $result['similarity'], 4)
+                round((float) $result->similarity, 4)
             );
             $this->line('Content:');
-            $this->line($result['content']);
+            $this->line($result->content);
             $this->newLine();
         }
 

@@ -6,6 +6,9 @@ use DateTimeInterface;
 
 interface PolicySearchRepository
 {
+    /**
+     * @return array<\App\DTOs\PolicyRetrieval\PolicySearchResult>
+     */
     public function search(
         array $embedding,
         DateTimeInterface $applicationDate,
