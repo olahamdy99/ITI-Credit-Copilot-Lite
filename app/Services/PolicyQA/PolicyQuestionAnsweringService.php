@@ -7,6 +7,7 @@ use App\DTOs\PolicyQA\GroundedAnswer;
 use App\Exceptions\PolicyQA\GroundedAnswerGenerationException;
 use App\Exceptions\PolicyRetrieval\InsufficientPolicyEvidenceException;
 use App\Services\PolicyRetrieval\PolicyRetrievalService;
+use App\Services\Policy\PolicyEditionSelector;
 use DateTimeInterface;
 use Throwable;
 
@@ -15,19 +16,23 @@ class PolicyQuestionAnsweringService
     public function __construct(
         private PolicyRetrievalService $retrievalService,
         private LanguageModelProvider $languageModelProvider,
+        private PolicyEditionSelector $policyEditionSelector,
     ) {
     }
 
     public function answer(
         string $question,
         DateTimeInterface $applicationDate,
-        ?int $policyEditionId = null,
         int $limit = 5
     ): GroundedAnswer {
+        $edition = $this->policyEditionSelector->select(
+            $applicationDate
+        );
+
         $results = $this->retrievalService->search(
             query: $question,
             applicationDate: $applicationDate,
-            policyEditionId: $policyEditionId,
+            policyEditionId: $edition->id,
             limit: $limit,
         );
 
