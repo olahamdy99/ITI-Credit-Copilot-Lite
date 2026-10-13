@@ -64,7 +64,7 @@ class AskPolicy extends Command
             return self::FAILURE;
         } catch (Throwable $exception) {
             $this->error(
-                'Unexpected error: ' . $exception->getMessage()
+                'Unexpected error: '.$exception->getMessage()
             );
 
             return self::FAILURE;

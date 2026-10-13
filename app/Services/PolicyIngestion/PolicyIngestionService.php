@@ -12,8 +12,7 @@ class PolicyIngestionService
     public function __construct(
         private PolicyTextExtractor $textExtractor,
         private PolicyChunker $chunker,
-    ) {
-    }
+    ) {}
 
     public function ingest(PolicyDocument $document): void
     {
@@ -47,44 +46,32 @@ class PolicyIngestionService
 
                 foreach ($chunks as $chunk) {
                     $document->chunks()->create([
-                        'policy_edition_id' =>
-                            $document->policy_edition_id,
+                        'policy_edition_id' => $document->policy_edition_id,
 
-                        'chunk_index' =>
-                            $chunk['chunk_index'],
+                        'chunk_index' => $chunk['chunk_index'],
 
-                        'section_id' =>
-                            $chunk['section_id'],
+                        'section_id' => $chunk['section_id'],
 
-                        'section_title' =>
-                            $chunk['section_title'],
+                        'section_title' => $chunk['section_title'],
 
-                        'clause_id' =>
-                            $chunk['clause_id'],
+                        'clause_id' => $chunk['clause_id'],
 
                         'page_number' => null,
 
-                        'content' =>
-                            $chunk['content'],
+                        'content' => $chunk['content'],
 
-                        'effective_from' =>
-                            $document->effective_from,
+                        'effective_from' => $document->effective_from,
 
-                        'effective_to' =>
-                            $document->effective_to,
+                        'effective_to' => $document->effective_to,
 
                         'metadata' => [
-                            'source_file' =>
-                                $document->source_file,
+                            'source_file' => $document->source_file,
 
-                            'document_type' =>
-                                $document->type,
+                            'document_type' => $document->type,
 
-                            'document_title' =>
-                                $document->title,
+                            'document_title' => $document->title,
 
-                            'format' =>
-                                $document->format,
+                            'format' => $document->format,
                         ],
                     ]);
                 }

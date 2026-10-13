@@ -14,6 +14,5 @@ class UnderwritingPolicyTerms
         public readonly int $maximumTenorMonths,
         public readonly float $minimumAmount,
         public readonly float $maximumAmount,
-    ) {
-    }
+    ) {}
 }

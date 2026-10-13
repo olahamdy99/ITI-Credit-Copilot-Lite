@@ -22,7 +22,7 @@ class PdfExtractor implements DocumentExtractor
         }
 
         try {
-            $parser = new Parser();
+            $parser = new Parser;
 
             $pdf = $parser->parseFile($path);
 

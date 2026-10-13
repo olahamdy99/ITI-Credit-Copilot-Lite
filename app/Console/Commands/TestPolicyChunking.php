@@ -43,7 +43,7 @@ class TestPolicyChunking extends Command
             $this->line("Chunk Index: {$chunk['chunk_index']}");
             $this->line("Section ID: {$chunk['section_id']}");
             $this->line(
-                'Clause ID: ' . ($chunk['clause_id'] ?? 'NULL')
+                'Clause ID: '.($chunk['clause_id'] ?? 'NULL')
             );
             $this->line("Title: {$chunk['section_title']}");
             $this->line('Content:');
@@ -52,7 +52,7 @@ class TestPolicyChunking extends Command
         }
 
         $this->info(
-            'Total chunks: ' . count($chunks)
+            'Total chunks: '.count($chunks)
         );
 
         return self::SUCCESS;

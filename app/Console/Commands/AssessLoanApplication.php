@@ -33,9 +33,9 @@ class AssessLoanApplication extends Command
                 [
                     ['Application', $application->reference_code],
                     ['Policy edition', $assessment->policyEdition?->code],
-                    ['Annual rate', $assessment->annual_rate_percent . '%'],
+                    ['Annual rate', $assessment->annual_rate_percent.'%'],
                     ['Monthly installment', $assessment->monthly_installment],
-                    ['DBR', $assessment->debt_burden_ratio . '%'],
+                    ['DBR', $assessment->debt_burden_ratio.'%'],
                     ['Maximum eligible amount', $assessment->maximum_eligible_amount],
                     ['Recommendation', $assessment->recommendation],
                     ['Recommended amount', $assessment->recommended_amount],
@@ -61,7 +61,7 @@ class AssessLoanApplication extends Command
             return self::SUCCESS;
         } catch (Throwable $exception) {
             $this->error(
-                'Assessment failed: ' . $exception->getMessage()
+                'Assessment failed: '.$exception->getMessage()
             );
 
             return self::FAILURE;

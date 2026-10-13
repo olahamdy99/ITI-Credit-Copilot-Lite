@@ -11,12 +11,11 @@ class PdfApplicationPackExtractor implements ApplicationPackExtractor
 {
     public function __construct(
         private Parser $parser
-    ) {
-    }
+    ) {}
 
     public function extract(string $path): string
     {
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             throw new ApplicationProcessingException(
                 "Application pack file not found: {$path}"
             );

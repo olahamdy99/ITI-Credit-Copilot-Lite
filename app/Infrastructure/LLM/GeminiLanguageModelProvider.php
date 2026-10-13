@@ -15,13 +15,13 @@ class GeminiLanguageModelProvider implements LanguageModelProvider
         $model = config('services.gemini.chat_model');
         $apiKey = config('services.gemini.api_key');
 
-        if (!$apiKey) {
+        if (! $apiKey) {
             throw new GroundedAnswerGenerationException(
                 'Gemini API key is not configured.'
             );
         }
 
-        if (!$model) {
+        if (! $model) {
             throw new GroundedAnswerGenerationException(
                 'Gemini chat model is not configured.'
             );
@@ -58,9 +58,9 @@ class GeminiLanguageModelProvider implements LanguageModelProvider
                 ]
             );
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             throw new GroundedAnswerGenerationException(
-                'Gemini request failed with status ' . $response->status()
+                'Gemini request failed with status '.$response->status()
             );
         }
 
@@ -68,7 +68,7 @@ class GeminiLanguageModelProvider implements LanguageModelProvider
             'candidates.0.content.parts.0.text'
         );
 
-        if (!is_string($text) || trim($text) === '') {
+        if (! is_string($text) || trim($text) === '') {
             throw new GroundedAnswerGenerationException(
                 'Gemini returned an empty response.'
             );

@@ -14,8 +14,7 @@ class PolicyRetrievalService
     public function __construct(
         private EmbeddingProvider $embeddingProvider,
         private PolicySearchRepository $repository,
-    ) {
-    }
+    ) {}
 
     public function search(
         string $query,
@@ -35,13 +34,12 @@ class PolicyRetrievalService
         $qualifiedResults = array_values(
             array_filter(
                 $results,
-                fn ($result) =>
-                    $result->similarity >= self::MIN_SIMILARITY
+                fn ($result) => $result->similarity >= self::MIN_SIMILARITY
             )
         );
 
         if ($qualifiedResults === []) {
-            throw new InsufficientPolicyEvidenceException();
+            throw new InsufficientPolicyEvidenceException;
         }
 
         return $qualifiedResults;

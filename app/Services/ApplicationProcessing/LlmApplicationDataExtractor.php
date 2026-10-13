@@ -12,8 +12,7 @@ class LlmApplicationDataExtractor implements ApplicationDataExtractor
 {
     public function __construct(
         private LanguageModelProvider $languageModelProvider,
-    ) {
-    }
+    ) {}
 
     public function extract(string $sanitizedText): ExtractedApplicationData
     {
@@ -100,8 +99,8 @@ PROMPT;
 
         foreach ($requiredFields as $field) {
             if (
-                !isset($data[$field]) ||
-                !array_key_exists('value', $data[$field]) ||
+                ! isset($data[$field]) ||
+                ! array_key_exists('value', $data[$field]) ||
                 empty($data[$field]['quote'])
             ) {
                 throw new ApplicationProcessingException(
@@ -110,7 +109,7 @@ PROMPT;
             }
 
             if (
-                !str_contains(
+                ! str_contains(
                     $sanitizedText,
                     $data[$field]['quote']
                 )

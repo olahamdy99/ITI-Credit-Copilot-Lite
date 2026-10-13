@@ -65,7 +65,7 @@ class ProcessApplicationPack extends Command
             return self::SUCCESS;
         } catch (Throwable $exception) {
             $this->error(
-                'Application processing failed: ' .
+                'Application processing failed: '.
                 $exception->getMessage()
             );
 

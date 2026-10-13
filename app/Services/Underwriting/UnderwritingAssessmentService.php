@@ -19,8 +19,7 @@ class UnderwritingAssessmentService
         private LoanCalculator $loanCalculator,
         private UnderwritingRulesEngine $rulesEngine,
         private PricingRateResolver $pricingRateResolver,
-    ) {
-    }
+    ) {}
 
     public function assess(LoanApplication $application): Assessment
     {
@@ -29,13 +28,13 @@ class UnderwritingAssessmentService
             'extraction',
         ]);
 
-        if (!$application->policyEdition) {
+        if (! $application->policyEdition) {
             throw new RuntimeException(
                 'Loan application has no policy edition.'
             );
         }
 
-        if (!$application->extraction) {
+        if (! $application->extraction) {
             throw new RuntimeException(
                 'Loan application has no completed extraction.'
             );
@@ -47,7 +46,7 @@ class UnderwritingAssessmentService
             );
         }
 
-        if (!$application->extraction->pricing_segment) {
+        if (! $application->extraction->pricing_segment) {
             throw new RuntimeException(
                 'Application has no pricing segment.'
             );
@@ -113,19 +112,15 @@ class UnderwritingAssessmentService
          * for the policy comparison.
          */
         $dbrPercentage = $this->loanCalculator->dbrPercentage(
-            netMonthlyIncome:
-                (float) $application->extraction->net_monthly_income,
-            existingMonthlyObligations:
-                (float) $application->extraction->existing_monthly_obligations,
+            netMonthlyIncome: (float) $application->extraction->net_monthly_income,
+            existingMonthlyObligations: (float) $application->extraction->existing_monthly_obligations,
             newMonthlyInstallment: $monthlyInstallment,
         );
 
         $maximumEligibleAmount =
             $this->loanCalculator->maxEligibleAmount(
-                netMonthlyIncome:
-                    (float) $application->extraction->net_monthly_income,
-                existingMonthlyObligations:
-                    (float) $application->extraction->existing_monthly_obligations,
+                netMonthlyIncome: (float) $application->extraction->net_monthly_income,
+                existingMonthlyObligations: (float) $application->extraction->existing_monthly_obligations,
                 maxDbrPercentage: $terms->maxDbrPercentage,
                 annualRatePercent: $annualRatePercent,
                 tenorMonths: $application->requested_tenor_months,
@@ -141,59 +136,41 @@ class UnderwritingAssessmentService
          * Run deterministic underwriting rules.
          */
         $decision = $this->rulesEngine->evaluate(
-            netMonthlyIncome:
-                (float) $application->extraction->net_monthly_income,
+            netMonthlyIncome: (float) $application->extraction->net_monthly_income,
 
-            existingMonthlyObligations:
-                (float) $application->extraction->existing_monthly_obligations,
+            existingMonthlyObligations: (float) $application->extraction->existing_monthly_obligations,
 
-            monthlyInstallment:
-                $monthlyInstallment,
+            monthlyInstallment: $monthlyInstallment,
 
-            dbrPercentage:
-                $dbrPercentage,
+            dbrPercentage: $dbrPercentage,
 
-            maxDbrPercentage:
-                $terms->maxDbrPercentage,
+            maxDbrPercentage: $terms->maxDbrPercentage,
 
-            minimumNetMonthlyIncome:
-                $terms->minimumNetMonthlyIncome,
+            minimumNetMonthlyIncome: $terms->minimumNetMonthlyIncome,
 
-            employmentMonths:
-                $employmentMonths,
+            employmentMonths: $employmentMonths,
 
-            minimumEmploymentMonths:
-                $terms->minimumEmploymentMonths,
+            minimumEmploymentMonths: $terms->minimumEmploymentMonths,
 
-            bureauScore:
-                $application->extraction->bureau_score,
+            bureauScore: $application->extraction->bureau_score,
 
-            minimumBureauScore:
-                $terms->minimumBureauScore,
+            minimumBureauScore: $terms->minimumBureauScore,
 
-            ageAtMaturity:
-                $ageAtMaturity,
+            ageAtMaturity: $ageAtMaturity,
 
-            maximumAgeAtMaturity:
-                $terms->maximumAgeAtMaturity,
+            maximumAgeAtMaturity: $terms->maximumAgeAtMaturity,
 
-            requestedTenorMonths:
-                $application->requested_tenor_months,
+            requestedTenorMonths: $application->requested_tenor_months,
 
-            minimumTenorMonths:
-                $terms->minimumTenorMonths,
+            minimumTenorMonths: $terms->minimumTenorMonths,
 
-            maximumTenorMonths:
-                $terms->maximumTenorMonths,
+            maximumTenorMonths: $terms->maximumTenorMonths,
 
-            requestedAmount:
-                (float) $application->requested_amount,
+            requestedAmount: (float) $application->requested_amount,
 
-            minimumAmount:
-                $terms->minimumAmount,
+            minimumAmount: $terms->minimumAmount,
 
-            maximumAmount:
-                $terms->maximumAmount,
+            maximumAmount: $terms->maximumAmount,
         );
 
         return DB::transaction(function () use (
@@ -236,35 +213,27 @@ class UnderwritingAssessmentService
                     'rule_code' => $rule->rule,
 
                     'rule_name' => match ($rule->rule) {
-                        'dbr' =>
-                            'Debt Burden Ratio',
+                        'dbr' => 'Debt Burden Ratio',
 
-                        'minimum_income' =>
-                            'Minimum Net Monthly Income',
+                        'minimum_income' => 'Minimum Net Monthly Income',
 
-                        'employment_duration' =>
-                            'Employment Duration',
+                        'employment_duration' => 'Employment Duration',
 
-                        'bureau_score' =>
-                            'Bureau Score',
+                        'bureau_score' => 'Bureau Score',
 
-                        'age_at_maturity' =>
-                            'Age at Maturity',
+                        'age_at_maturity' => 'Age at Maturity',
 
-                        'tenor' =>
-                            'Requested Tenor',
+                        'tenor' => 'Requested Tenor',
 
-                        'amount' =>
-                            'Requested Amount',
+                        'amount' => 'Requested Amount',
 
-                        default =>
-                            ucwords(
-                                str_replace(
-                                    '_',
-                                    ' ',
-                                    $rule->rule
-                                )
-                            ),
+                        default => ucwords(
+                            str_replace(
+                                '_',
+                                ' ',
+                                $rule->rule
+                            )
+                        ),
                     },
 
                     'result' => $rule->status,

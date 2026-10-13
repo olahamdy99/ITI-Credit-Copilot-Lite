@@ -65,7 +65,7 @@ class SectionChunker implements DocumentChunker
 
             $currentChunk['content'] .=
                 ($currentChunk['content'] === '' ? '' : PHP_EOL)
-                . $line;
+                .$line;
         }
 
         if (
@@ -122,6 +122,7 @@ class SectionChunker implements DocumentChunker
             'title' => $title,
         ];
     }
+
     public function supports(string $format): bool
     {
         return in_array(

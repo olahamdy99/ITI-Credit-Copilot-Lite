@@ -68,7 +68,7 @@ class ApplicationTextSanitizer
         string $field,
         array &$removedFields
     ): string {
-        $pattern = '/^' . preg_quote($field, '/') . '\s+.*$/mi';
+        $pattern = '/^'.preg_quote($field, '/').'\s+.*$/mi';
 
         if (preg_match($pattern, $text)) {
             $removedFields[] = $field;

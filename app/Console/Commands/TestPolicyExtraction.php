@@ -12,6 +12,7 @@ class TestPolicyExtraction extends Command
      * @var string
      */
     protected $signature = 'policy:test-extraction';
+
     /**
      * The console command description.
      *
@@ -22,7 +23,7 @@ class TestPolicyExtraction extends Command
     /**
      * Execute the console command.
      */
-    public function handle(\App\Services\PolicyIngestion\PolicyTextExtractor $extractor): int 
+    public function handle(\App\Services\PolicyIngestion\PolicyTextExtractor $extractor): int
     {
         $documents = [
             [

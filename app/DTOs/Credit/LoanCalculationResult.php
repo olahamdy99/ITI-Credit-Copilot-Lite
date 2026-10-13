@@ -9,6 +9,5 @@ class LoanCalculationResult
         public readonly float $dbrPercentage,
         public readonly int $maxEligibleAmount,
         public readonly float $ageAtMaturity,
-    ) {
-    }
+    ) {}
 }

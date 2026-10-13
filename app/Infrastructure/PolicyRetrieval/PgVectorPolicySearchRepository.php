@@ -3,9 +3,9 @@
 namespace App\Infrastructure\PolicyRetrieval;
 
 use App\Contracts\PolicyRetrieval\PolicySearchRepository;
+use App\DTOs\PolicyRetrieval\PolicySearchResult;
 use DateTimeInterface;
 use Illuminate\Support\Facades\DB;
-use App\DTOs\PolicyRetrieval\PolicySearchResult;
 
 class PgVectorPolicySearchRepository implements PolicySearchRepository
 {
@@ -15,7 +15,7 @@ class PgVectorPolicySearchRepository implements PolicySearchRepository
         ?int $policyEditionId = null,
         int $limit = 5
     ): array {
-        $vector = '[' . implode(',', $embedding) . ']';
+        $vector = '['.implode(',', $embedding).']';
 
         $date = $applicationDate->format('Y-m-d');
 

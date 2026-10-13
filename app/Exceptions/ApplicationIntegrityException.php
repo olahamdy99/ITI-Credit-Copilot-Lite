@@ -4,6 +4,4 @@ namespace App\Exceptions;
 
 use RuntimeException;
 
-class ApplicationIntegrityException extends RuntimeException
-{
-}
+class ApplicationIntegrityException extends RuntimeException {}

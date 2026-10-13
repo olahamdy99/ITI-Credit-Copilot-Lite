@@ -13,7 +13,7 @@ class UnderwritingRulesEngineTest extends TestCase
     {
         parent::setUp();
 
-        $this->engine = new UnderwritingRulesEngine();
+        $this->engine = new UnderwritingRulesEngine;
     }
 
     public function test_returns_eligible_when_all_rules_pass(): void

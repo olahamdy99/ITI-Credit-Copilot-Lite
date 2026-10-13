@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Exceptions\PolicyRetrieval\InsufficientPolicyEvidenceException;
+use Illuminate\Console\Command;
 
 class SearchPolicy extends Command
 {
@@ -37,20 +37,20 @@ class SearchPolicy extends Command
 
         $limit = (int) $this->option('limit');
 
-    try {
-        $results = $service->search(
-            query: $query,
-            applicationDate: $date,
-            policyEditionId: null,
-            limit: $limit,
-        );
-    } catch (InsufficientPolicyEvidenceException $exception) {
-        $this->warn(
-            'Insufficient policy evidence to answer this question.'
-        );
+        try {
+            $results = $service->search(
+                query: $query,
+                applicationDate: $date,
+                policyEditionId: null,
+                limit: $limit,
+            );
+        } catch (InsufficientPolicyEvidenceException $exception) {
+            $this->warn(
+                'Insufficient policy evidence to answer this question.'
+            );
 
-        return self::SUCCESS;
-    }
+            return self::SUCCESS;
+        }
 
         if ($results === []) {
             $this->warn('No policy results found.');
@@ -60,18 +60,18 @@ class SearchPolicy extends Command
 
         foreach ($results as $index => $result) {
             $this->line('----------------------------------------');
-            $this->line('Rank: ' . ($index + 1));
+            $this->line('Rank: '.($index + 1));
             $this->line(
-                'Document: ' . $result->documentTitle
+                'Document: '.$result->documentTitle
             );
             $this->line(
-                'Section: ' . ($result->sectionId?? 'N/A')
+                'Section: '.($result->sectionId ?? 'N/A')
             );
             $this->line(
-                'Clause: ' . ($result->clauseId ?? 'N/A')
+                'Clause: '.($result->clauseId ?? 'N/A')
             );
             $this->line(
-                'Similarity: ' .
+                'Similarity: '.
                 round((float) $result->similarity, 4)
             );
             $this->line('Content:');

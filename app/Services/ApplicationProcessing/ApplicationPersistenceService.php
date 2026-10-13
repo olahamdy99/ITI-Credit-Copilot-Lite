@@ -15,8 +15,7 @@ class ApplicationPersistenceService
 {
     public function __construct(
         private PolicyEditionSelector $policyEditionSelector,
-    ) {
-    }
+    ) {}
 
     public function persist(
         ExtractedApplicationData $data,

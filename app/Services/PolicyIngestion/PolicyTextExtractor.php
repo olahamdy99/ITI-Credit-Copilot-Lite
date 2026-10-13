@@ -8,12 +8,11 @@ use App\Exceptions\PolicyIngestion\UnsupportedDocumentFormatException;
 class PolicyTextExtractor
 {
     /**
-     * @param iterable<DocumentExtractor> $extractors
+     * @param  iterable<DocumentExtractor>  $extractors
      */
     public function __construct(
         private iterable $extractors
-    ) {
-    }
+    ) {}
 
     public function extract(string $path, string $format): string
     {

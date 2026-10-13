@@ -8,6 +8,5 @@ class SanitizedApplicationText
         public readonly string $text,
         public readonly array $removedFields,
         public readonly array $maskedFields,
-    ) {
-    }
+    ) {}
 }

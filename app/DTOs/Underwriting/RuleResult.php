@@ -9,6 +9,5 @@ class RuleResult
         public readonly string $status,
         public readonly string $message,
         public readonly array $details = [],
-    ) {
-    }
+    ) {}
 }
