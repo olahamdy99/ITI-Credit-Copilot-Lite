@@ -21,8 +21,8 @@ class GeminiEmbeddingProvider implements EmbeddingProvider
                 ])
                 ->post(
                     'https://generativelanguage.googleapis.com/v1beta/models/'
-                    . config('services.gemini.embedding_model')
-                    . ':embedContent',
+                    .config('services.gemini.embedding_model')
+                    .':embedContent',
                     [
                         'content' => [
                             'parts' => [
@@ -37,7 +37,7 @@ class GeminiEmbeddingProvider implements EmbeddingProvider
 
             if ($response->failed()) {
                 throw new EmbeddingGenerationException(
-                    'Gemini embedding request failed: ' . $response->body()
+                    'Gemini embedding request failed: '.$response->body()
                 );
             }
 
@@ -51,9 +51,9 @@ class GeminiEmbeddingProvider implements EmbeddingProvider
 
             if (count($values) !== self::DIMENSION) {
                 throw new EmbeddingGenerationException(
-                    'Expected ' . self::DIMENSION
-                    . ' dimensions, received '
-                    . count($values)
+                    'Expected '.self::DIMENSION
+                    .' dimensions, received '
+                    .count($values)
                 );
             }
 
@@ -66,7 +66,7 @@ class GeminiEmbeddingProvider implements EmbeddingProvider
         } catch (Throwable $exception) {
             throw new EmbeddingGenerationException(
                 'Unable to generate embedding: '
-                . $exception->getMessage()
+                .$exception->getMessage()
             );
         }
     }

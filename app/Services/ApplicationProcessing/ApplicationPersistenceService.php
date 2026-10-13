@@ -15,12 +15,12 @@ class ApplicationPersistenceService
 {
     public function __construct(
         private PolicyEditionSelector $policyEditionSelector,
-    ) {
-    }
+    ) {}
 
     public function persist(
         ExtractedApplicationData $data,
         SanitizedApplicationText $sanitized,
+        string $pricingSegment,
         string $sourceFile,
         string $originalName,
         string $mimeType,
@@ -29,6 +29,7 @@ class ApplicationPersistenceService
         return DB::transaction(function () use (
             $data,
             $sanitized,
+            $pricingSegment,
             $sourceFile,
             $originalName,
             $mimeType,
@@ -80,6 +81,7 @@ class ApplicationPersistenceService
                     'existing_monthly_obligations' => $data->existingMonthlyObligations,
                     'employment_start_date' => $data->employmentStartDate,
                     'bureau_score' => $data->bureauScore,
+                    'pricing_segment' => $pricingSegment,
                     'evidence' => [
                         'fields' => $data->evidence,
                         'removed_fields' => $sanitized->removedFields,

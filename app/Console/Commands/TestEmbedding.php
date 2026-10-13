@@ -33,11 +33,11 @@ class TestEmbedding extends Command
         $embedding = $provider->embed($text);
 
         $this->info(
-            'Embedding dimensions: ' . count($embedding)
+            'Embedding dimensions: '.count($embedding)
         );
 
         $this->line(
-            'First 5 values: ' .
+            'First 5 values: '.
             implode(', ', array_slice($embedding, 0, 5))
         );
 

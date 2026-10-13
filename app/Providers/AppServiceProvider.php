@@ -2,25 +2,24 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\ServiceProvider;
+use App\Contracts\ApplicationProcessing\ApplicationDataExtractor;
+use App\Contracts\ApplicationProcessing\ApplicationPackExtractor;
+use App\Contracts\Embeddings\EmbeddingProvider;
+use App\Contracts\LLM\LanguageModelProvider;
+use App\Contracts\PolicyRetrieval\PolicySearchRepository;
+use App\Infrastructure\ApplicationProcessing\PdfApplicationPackExtractor;
+use App\Infrastructure\Embeddings\GeminiEmbeddingProvider;
+use App\Infrastructure\LLM\GeminiLanguageModelProvider;
+use App\Infrastructure\PolicyRetrieval\PgVectorPolicySearchRepository;
+use App\Services\ApplicationProcessing\LlmApplicationDataExtractor;
+use App\Services\PolicyIngestion\Chunkers\CsvRowChunker;
+use App\Services\PolicyIngestion\Chunkers\SectionChunker;
 use App\Services\PolicyIngestion\Extractors\CsvExtractor;
 use App\Services\PolicyIngestion\Extractors\MarkdownExtractor;
-use App\Services\PolicyIngestion\PolicyTextExtractor;
 use App\Services\PolicyIngestion\Extractors\PdfExtractor;
-use App\Contracts\PolicyIngestion\DocumentChunker;
-use App\Services\PolicyIngestion\Chunkers\SectionChunker;
-use App\Services\PolicyIngestion\Chunkers\CsvRowChunker;
 use App\Services\PolicyIngestion\PolicyChunker;
-use App\Contracts\Embeddings\EmbeddingProvider;
-use App\Infrastructure\Embeddings\GeminiEmbeddingProvider;
-use App\Contracts\PolicyRetrieval\PolicySearchRepository;
-use App\Infrastructure\PolicyRetrieval\PgVectorPolicySearchRepository;
-use App\Contracts\LLM\LanguageModelProvider;
-use App\Infrastructure\LLM\GeminiLanguageModelProvider;
-use App\Contracts\ApplicationProcessing\ApplicationPackExtractor;
-use App\Infrastructure\ApplicationProcessing\PdfApplicationPackExtractor;
-use App\Contracts\ApplicationProcessing\ApplicationDataExtractor;
-use App\Services\ApplicationProcessing\LlmApplicationDataExtractor;
+use App\Services\PolicyIngestion\PolicyTextExtractor;
+use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -95,12 +94,13 @@ class AppServiceProvider extends ServiceProvider
             ApplicationPackExtractor::class,
             PdfApplicationPackExtractor::class
         );
-        
+
         $this->app->bind(
             ApplicationDataExtractor::class,
             LlmApplicationDataExtractor::class
         );
     }
+
     /**
      * Bootstrap any application services.
      */

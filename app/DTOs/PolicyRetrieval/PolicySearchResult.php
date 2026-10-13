@@ -17,8 +17,7 @@ class PolicySearchResult
         public readonly ?int $pageNumber,
         public readonly string $content,
         public readonly float $similarity,
-    ) {
-    }
+    ) {}
 
     public function citation(): array
     {

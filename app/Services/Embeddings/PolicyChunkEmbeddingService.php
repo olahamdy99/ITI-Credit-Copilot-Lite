@@ -10,8 +10,7 @@ class PolicyChunkEmbeddingService
 {
     public function __construct(
         private EmbeddingProvider $embeddingProvider,
-    ) {
-    }
+    ) {}
 
     public function embed(PolicyChunk $chunk): void
     {
@@ -19,7 +18,7 @@ class PolicyChunkEmbeddingService
             $chunk->content
         );
 
-        $vector = '[' . implode(',', $embedding) . ']';
+        $vector = '['.implode(',', $embedding).']';
 
         DB::update(
             '

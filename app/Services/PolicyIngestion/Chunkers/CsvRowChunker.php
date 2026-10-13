@@ -34,7 +34,7 @@ class CsvRowChunker implements DocumentChunker
                 'section_id' => 'PRICING',
                 'section_title' => 'Pricing Table',
                 'clause_id' => null,
-                'content' => $header . PHP_EOL . $line,
+                'content' => $header.PHP_EOL.$line,
             ];
         }
 

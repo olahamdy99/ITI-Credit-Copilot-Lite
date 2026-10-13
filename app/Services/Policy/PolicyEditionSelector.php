@@ -23,8 +23,8 @@ class PolicyEditionSelector
             ->orderByDesc('effective_from')
             ->first();
 
-        if (!$edition) {
-            throw new PolicyEditionNotFoundException();
+        if (! $edition) {
+            throw new PolicyEditionNotFoundException;
         }
 
         return $edition;

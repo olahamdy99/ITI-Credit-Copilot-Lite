@@ -64,7 +64,7 @@ class EmbedPolicyChunks extends Command
 
                 $this->error(
                     "Failed on chunk {$chunk->id}: "
-                    . $exception->getMessage()
+                    .$exception->getMessage()
                 );
 
                 return self::FAILURE;

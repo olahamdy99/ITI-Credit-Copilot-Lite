@@ -6,8 +6,8 @@ use App\Contracts\LLM\LanguageModelProvider;
 use App\DTOs\PolicyQA\GroundedAnswer;
 use App\Exceptions\PolicyQA\GroundedAnswerGenerationException;
 use App\Exceptions\PolicyRetrieval\InsufficientPolicyEvidenceException;
-use App\Services\PolicyRetrieval\PolicyRetrievalService;
 use App\Services\Policy\PolicyEditionSelector;
+use App\Services\PolicyRetrieval\PolicyRetrievalService;
 use DateTimeInterface;
 use Throwable;
 
@@ -17,8 +17,7 @@ class PolicyQuestionAnsweringService
         private PolicyRetrievalService $retrievalService,
         private LanguageModelProvider $languageModelProvider,
         private PolicyEditionSelector $policyEditionSelector,
-    ) {
-    }
+    ) {}
 
     public function answer(
         string $question,
@@ -74,17 +73,17 @@ PROMPT;
             throw $exception;
         } catch (Throwable $exception) {
             throw new GroundedAnswerGenerationException(
-                'Failed to generate grounded policy answer: ' .
+                'Failed to generate grounded policy answer: '.
                 $exception->getMessage()
             );
         }
 
         if ($response === '') {
-            throw new GroundedAnswerGenerationException();
+            throw new GroundedAnswerGenerationException;
         }
 
         if ($response === 'INSUFFICIENT_POLICY_EVIDENCE') {
-            throw new InsufficientPolicyEvidenceException();
+            throw new InsufficientPolicyEvidenceException;
         }
 
         preg_match_all('/\bE(\d+)\b/', $response, $matches);
@@ -92,7 +91,7 @@ PROMPT;
         $citedIds = array_values(
             array_unique(
                 array_map(
-                    fn ($number) => 'E' . $number,
+                    fn ($number) => 'E'.$number,
                     $matches[1] ?? []
                 )
             )
@@ -107,9 +106,9 @@ PROMPT;
         $citations = [];
 
         foreach ($results as $index => $result) {
-            $evidenceId = 'E' . ($index + 1);
+            $evidenceId = 'E'.($index + 1);
 
-            if (!in_array($evidenceId, $citedIds, true)) {
+            if (! in_array($evidenceId, $citedIds, true)) {
                 continue;
             }
 
@@ -136,15 +135,15 @@ PROMPT;
         $blocks = [];
 
         foreach ($results as $index => $result) {
-            $evidenceId = 'E' . ($index + 1);
+            $evidenceId = 'E'.($index + 1);
 
             $blocks[] = implode("\n", [
                 "[{$evidenceId}]",
                 "Document: {$result->documentTitle}",
-                'Source file: ' . $result->sourceFile,
-                'Section: ' . ($result->sectionId ?? 'N/A'),
-                'Clause: ' . ($result->clauseId ?? 'N/A'),
-                'Page: ' . ($result->pageNumber ?? 'N/A'),
+                'Source file: '.$result->sourceFile,
+                'Section: '.($result->sectionId ?? 'N/A'),
+                'Clause: '.($result->clauseId ?? 'N/A'),
+                'Page: '.($result->pageNumber ?? 'N/A'),
                 'Content:',
                 $result->content,
             ]);

@@ -14,7 +14,7 @@ class LoanCalculatorTest extends TestCase
     {
         parent::setUp();
 
-        $this->calculator = new LoanCalculator();
+        $this->calculator = new LoanCalculator;
     }
 
     public function test_monthly_installment_matches_worked_example(): void

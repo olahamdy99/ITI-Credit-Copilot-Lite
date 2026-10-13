@@ -15,6 +15,5 @@ class ExtractedApplicationData
         public readonly float $existingMonthlyObligations,
         public readonly int $bureauScore,
         public readonly array $evidence,
-    ) {
-    }
+    ) {}
 }

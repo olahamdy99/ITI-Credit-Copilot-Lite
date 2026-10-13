@@ -31,15 +31,15 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
     'gemini' => [
-    'api_key' => env('GEMINI_API_KEY'),
-    'embedding_model' => env(
-        'GEMINI_EMBEDDING_MODEL',
-        'gemini-embedding-2'
-    ),
-    'chat_model' => env(
-        'GEMINI_CHAT_MODEL',
-        'gemini-2.5-flash'
-    ),
-],
+        'api_key' => env('GEMINI_API_KEY'),
+        'embedding_model' => env(
+            'GEMINI_EMBEDDING_MODEL',
+            'gemini-embedding-2'
+        ),
+        'chat_model' => env(
+            'GEMINI_CHAT_MODEL',
+            'gemini-2.5-flash'
+        ),
+    ],
 
 ];

@@ -12,8 +12,7 @@ class ApplicationPackProcessingService
         private ApplicationTextSanitizer $sanitizer,
         private ApplicationIntegrityValidator $integrityValidator,
 
-    ) {
-    }
+    ) {}
 
     public function process(string $path): SanitizedApplicationText
     {

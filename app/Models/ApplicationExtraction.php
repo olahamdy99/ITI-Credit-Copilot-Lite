@@ -12,6 +12,7 @@ class ApplicationExtraction extends Model
         'net_monthly_income',
         'existing_monthly_obligations',
         'employment_start_date',
+        'pricing_segment',
         'bureau_score',
         'evidence',
         'status',

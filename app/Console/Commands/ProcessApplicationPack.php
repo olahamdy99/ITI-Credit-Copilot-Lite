@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Contracts\ApplicationProcessing\ApplicationDataExtractor;
 use App\Services\ApplicationProcessing\ApplicationPackProcessingService;
 use App\Services\ApplicationProcessing\ApplicationPersistenceService;
+use App\Services\ApplicationProcessing\PricingSegmentResolver;
 use Illuminate\Console\Command;
 use Throwable;
 
@@ -19,12 +20,16 @@ class ProcessApplicationPack extends Command
     public function handle(
         ApplicationPackProcessingService $processor,
         ApplicationDataExtractor $extractor,
-        ApplicationPersistenceService $persistence
+        ApplicationPersistenceService $persistence,
+        PricingSegmentResolver $pricingSegmentResolver
     ): int {
         $path = $this->argument('path');
 
         try {
             $sanitized = $processor->process($path);
+            $pricingSegment = $pricingSegmentResolver->resolve(
+                $sanitized->text
+            );
 
             $data = $extractor->extract(
                 $sanitized->text
@@ -33,6 +38,7 @@ class ProcessApplicationPack extends Command
             $application = $persistence->persist(
                 data: $data,
                 sanitized: $sanitized,
+                pricingSegment: $pricingSegment,
                 sourceFile: $path,
                 originalName: basename($path),
                 mimeType: 'application/pdf',
@@ -51,6 +57,7 @@ class ProcessApplicationPack extends Command
                     ['Net income', $application->extraction?->net_monthly_income],
                     ['Obligations', $application->extraction?->existing_monthly_obligations],
                     ['Bureau score', $application->extraction?->bureau_score],
+                    ['Pricing segment', $application->extraction?->pricing_segment],
                     ['Status', $application->extraction?->status],
                 ]
             );
@@ -58,7 +65,7 @@ class ProcessApplicationPack extends Command
             return self::SUCCESS;
         } catch (Throwable $exception) {
             $this->error(
-                'Application processing failed: ' .
+                'Application processing failed: '.
                 $exception->getMessage()
             );
 
