@@ -26,19 +26,19 @@ class AssessmentApprovalApiTest extends TestCase
         ]);
     }
 
-        private function createLoanApplication(
-            PolicyEdition $policyEdition
-        ): LoanApplication {
-            return LoanApplication::create([
-                'reference_code' => 'APP-TEST-001',
-                'requested_amount' => 300000,
-                'requested_tenor_months' => 60,
-                'date_of_birth' => '1990-01-01',
-                'application_date' => '2025-04-01',
-                'status' => 'submitted',
-                'policy_edition_id' => $policyEdition->id,
-            ]);
-        }
+    private function createLoanApplication(
+        PolicyEdition $policyEdition
+    ): LoanApplication {
+        return LoanApplication::create([
+            'reference_code' => 'APP-TEST-001',
+            'requested_amount' => 300000,
+            'requested_tenor_months' => 60,
+            'date_of_birth' => '1990-01-01',
+            'application_date' => '2025-04-01',
+            'status' => 'submitted',
+            'policy_edition_id' => $policyEdition->id,
+        ]);
+    }
 
     private function createAssessment(
         LoanApplication $application,
@@ -129,8 +129,7 @@ class AssessmentApprovalApiTest extends TestCase
         $response
             ->assertForbidden()
             ->assertJson([
-                'message' =>
-                    'You are not authorized to perform this action.',
+                'message' => 'You are not authorized to perform this action.',
             ]);
     }
 
