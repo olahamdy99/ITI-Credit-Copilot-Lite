@@ -531,6 +531,7 @@ http://localhost:8001/api/documentation
 
 ---
 
+
 # Demo Accounts
 
 The demo setup creates the following synthetic accounts.
@@ -616,6 +617,11 @@ php artisan policy:ask "What is the maximum DBR?" 2025-04-03
 Use `php artisan help <command>` for the exact arguments/options of any command.
 
 ---
+
+# Demo Video
+
+[Watch demo](https://www.awesomescreenshot.com/video/57454668?key=2b5f890c5b18e53cfd2831233389ed5c)
+
 
 # Testing
 
