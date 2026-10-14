@@ -9,7 +9,7 @@ use DateTimeInterface;
 
 class PolicyRetrievalService
 {
-    private const MIN_SIMILARITY = 0.73;
+    private const MIN_SIMILARITY = 0.74;
 
     public function __construct(
         private EmbeddingProvider $embeddingProvider,
