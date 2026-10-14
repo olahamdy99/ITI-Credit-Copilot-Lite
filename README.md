@@ -1,9 +1,9 @@
 # ITI Credit Copilot Lite
 
-ITI Staff Technical Assessment — Finance  
+**ITI Staff Technical Assessment — Finance**  
 **Credit Copilot Lite: A Grounded RAG Assistant for Personal Loan Underwriting**
 
-Credit Copilot Lite is a Laravel-based application that ingests synthetic lending policy documents, answers policy questions with citations, evaluates personal loan applications using deterministic calculations and rules, generates grounded credit memos, and requires human Credit Officer approval before an offer can be issued.
+Credit Copilot Lite is a Laravel-based application that ingests synthetic lending policy documents, answers policy questions with citations, evaluates personal-loan applications using deterministic calculations and rules, generates grounded credit memos, and requires human Credit Officer approval before an offer can be issued.
 
 > This project uses synthetic data only and does not represent real banking policy or financial advice.
 
@@ -16,14 +16,18 @@ The implementation follows four main rules:
 1. **Grounded, never guessing**
    - Policy answers are based only on retrieved policy evidence.
    - Answers include citations.
-   - If the available documents do not contain enough evidence, the system refuses to answer.
+   - If the documents do not contain enough evidence, the system returns:
+
+   ```text
+   The documents do not contain enough information.
+   ```
 
 2. **Numbers are deterministic**
    - The LLM does not calculate installments, DBR, limits, or eligibility values.
-   - Financial calculations are implemented in normal PHP code and covered by unit tests.
+   - Financial calculations are implemented in PHP and covered by tests.
 
 3. **Fair by design**
-   - Protected attributes such as gender, religion, marital status, and nationality are removed before LLM or underwriting rule processing.
+   - Protected attributes such as gender, religion, marital status, and nationality are removed before LLM extraction and underwriting-rule processing.
 
 4. **Human approval is mandatory**
    - Assessments remain pending until a Credit Officer approves or rejects them.
@@ -41,7 +45,6 @@ The implementation follows four main rules:
 - Laravel Sanctum
 - Gemini API
 - L5-Swagger / OpenAPI
-- Blade
 - PHPUnit
 - Laravel Pint
 - GitHub Actions
@@ -50,9 +53,7 @@ The implementation follows four main rules:
 
 ## Architecture
 
-The application separates business logic from infrastructure concerns.
-
-Main areas include:
+The application separates domain/business logic from infrastructure concerns.
 
 ```text
 app/
@@ -75,26 +76,27 @@ app/
 └── Http/
 ```
 
-Examples of this separation:
+Key design rules:
 
 - deterministic calculations and rules do not depend on the LLM
 - the LLM is accessed through an interface
-- pgvector retrieval is implemented in the infrastructure layer
-- controllers delegate business logic to services
+- pgvector retrieval is isolated from domain calculations
+- policy-edition selection is performed by application code
+- applicant documents are treated as untrusted input
 
-More detailed architecture decisions will be documented in `DESIGN.md`.
+See [`docs/DESIGN.md`](docs/DESIGN.md) for the detailed system design.
 
 ---
 
 ## Policy Ingestion
 
-The system supports the provided synthetic policy corpus, including:
+The system supports the supplied synthetic policy corpus in:
 
 - PDF
 - Markdown
 - CSV
 
-The ingestion pipeline is separated into stages such as:
+The ingestion pipeline is:
 
 ```text
 extract
@@ -106,7 +108,7 @@ embed
 index
 ```
 
-Policy chunks store metadata including:
+Each policy chunk stores metadata such as:
 
 - source document
 - section / clause
@@ -114,15 +116,13 @@ Policy chunks store metadata including:
 - policy edition
 - effective dates
 
-Re-ingestion is designed to avoid creating duplicate policy chunks.
+Re-ingestion is idempotent: existing chunks for a policy document are replaced before new chunks are created, preventing duplicates.
 
 ---
 
 ## Policy Retrieval and Q&A
 
 Policy questions use semantic retrieval through PostgreSQL + pgvector.
-
-The Q&A flow is:
 
 ```text
 Question
@@ -131,7 +131,9 @@ Select applicable policy edition
    ↓
 Retrieve policy chunks
    ↓
-Build policy evidence
+Apply similarity threshold
+   ↓
+Build bounded policy evidence
    ↓
 LLM generates grounded answer
    ↓
@@ -140,78 +142,91 @@ Validate citations
 Return answer + citations
 ```
 
-The LLM is explicitly instructed to answer only from the supplied policy evidence.
-
-If the evidence is insufficient, the user receives:
+The current minimum similarity threshold is:
 
 ```text
-The documents do not contain enough information.
+0.74
 ```
+
+The threshold was changed from `0.73` after evaluation revealed a false-positive retrieval for an out-of-corpus cryptocurrency question.
+
+Detailed results are documented in [`docs/EVALUATION.md`](docs/EVALUATION.md).
 
 ---
 
 ## Policy Edition Selection
 
-The correct policy edition is selected using the application date.
+The correct policy edition is selected in code from the application date.
 
-Policy editions are selected by application code, not by the LLM.
+The LLM does **not** choose the policy edition.
 
-This is important because some lending limits differ between policy editions.
+This is important because rules differ by edition. For example:
+
+```text
+2024 maximum DBR: 50%
+2025 maximum DBR: 45%
+```
 
 ---
 
 ## Application Processing
 
-The provided synthetic loan application packs can be processed by the system.
+Application documents are treated as **untrusted data** and are never added to the trusted policy knowledge base.
 
-The application pipeline includes:
+The processing flow is:
 
 ```text
-Load application
+Application PDF
    ↓
-Validate required data
+Extract raw text
+   ↓
+Integrity validation
    ↓
 Remove protected attributes
    ↓
+Mask sensitive values
+   ↓
+LLM structured extraction
+   ↓
+Verify evidence quotes
+   ↓
 Select policy edition
    ↓
-Extract financial information
-   ↓
-Verify extracted evidence
-   ↓
-Retrieve policy rules
-   ↓
-Run deterministic calculations
-   ↓
-Run underwriting rules
-   ↓
-Generate recommendation
+Persist structured application data
 ```
 
-Application documents are treated as **untrusted data** and are not added to the trusted policy knowledge base.
+If integrity validation fails or extracted evidence cannot be verified, the system fails safely rather than guessing.
 
 ---
 
-## Protected Attributes
+## Protected and Sensitive Data
 
-The underwriting workflow removes protected attributes before they can influence LLM or rule processing.
-
-Protected attributes include:
+Protected attributes removed before underwriting processing include:
 
 - gender
 - religion
 - marital status
 - nationality
 
-A dedicated fairness test still needs to be finalized before submission to demonstrate that changing only protected attributes does not change the underwriting result.
+Sensitive values masked before LLM processing include:
+
+- national ID
+- phone number
+- applicant name
+
+Example replacements:
+
+```text
+[NATIONAL_ID_REDACTED]
+[PHONE_REDACTED]
+[APPLICANT_NAME_REDACTED]
+```
 
 ---
 
 ## Deterministic Loan Calculations
 
-Financial values are calculated by application code.
-
-The LLM never performs these calculations.
+The LLM never performs lending calculations.
 
 Implemented calculations include:
 
@@ -221,7 +236,7 @@ Implemented calculations include:
 - age at maturity
 - applicable interest rate
 
-The calculation engine is unit tested against worked examples and edge cases.
+The calculation engine is implemented in normal PHP code and tested independently from the LLM.
 
 ---
 
@@ -229,7 +244,7 @@ The calculation engine is unit tested against worked examples and edge cases.
 
 The rules engine evaluates conditions including:
 
-- Debt Burden Ratio
+- DBR
 - minimum monthly income
 - employment duration
 - bureau score
@@ -237,7 +252,7 @@ The rules engine evaluates conditions including:
 - requested tenor
 - requested loan amount
 
-Possible rule outcomes include:
+Possible outcomes include:
 
 ```text
 PASS
@@ -245,32 +260,36 @@ FAIL
 REFER
 ```
 
-A low bureau score results in a human referral rather than an automatic decline.
+Decision precedence is:
+
+```text
+FAIL > REFER > ELIGIBLE
+```
+
+A low bureau score is treated as a referral for human review rather than an automatic decline.
 
 ---
 
 ## Credit Memo
 
-The system generates a grounded credit memo using:
+The credit memo is generated from:
 
-- application data
+- verified application data
 - deterministic calculations
 - underwriting rule results
 - policy citations
 
 Important safety rule:
 
-> Every numeric value in the final credit memo is inserted by application code.
+> Numeric values in the final credit memo are supplied by application code rather than calculated by the LLM.
 
-The LLM is not allowed to invent or calculate numeric values.
-
-Generated numbers not supplied by application code cause credit memo generation to fail.
+If the LLM introduces an unexpected number, memo generation is rejected.
 
 ---
 
 ## Human Approval Workflow
 
-The supported lifecycle is:
+The lifecycle is:
 
 ```text
 pending_approval
@@ -280,7 +299,7 @@ pending_approval
         +----> rejected
 ```
 
-Approval records include:
+Approval records store:
 
 - assessment
 - approving user
@@ -289,9 +308,7 @@ Approval records include:
 - decision timestamp
 - authority limit
 
-A Credit Officer cannot approve an amount above their configured authority limit.
-
-This validation is enforced server-side.
+Authority limits are enforced server-side.
 
 Example:
 
@@ -307,19 +324,17 @@ Approval rejected by the server.
 
 ## Authentication and RBAC
 
-Authentication is implemented using Laravel Sanctum.
-
-The system currently supports two roles.
+Authentication uses Laravel Sanctum.
 
 ### Loan Officer
 
 Can:
 
-- login
-- view applications
-- run an underwriting assessment
-- generate a credit memo
+- authenticate
 - ask policy questions
+- process applications
+- run assessments
+- generate credit memos
 
 ### Credit Officer
 
@@ -329,17 +344,13 @@ Can perform Loan Officer actions and also:
 - reject assessments
 - issue approved assessments
 
-Permissions are enforced on the server through middleware and service-level validation.
-
-They are not implemented only by hiding UI buttons.
+Permissions are enforced server-side through middleware and service-level checks.
 
 ---
 
 ## REST API
 
-The application exposes REST API endpoints.
-
-Main endpoints currently include:
+Main API endpoints include:
 
 ```text
 POST /api/login
@@ -359,67 +370,37 @@ POST /api/assessments/{assessment}/issue
 
 ## OpenAPI / Swagger
 
-OpenAPI documentation is generated using L5-Swagger.
-
-After starting the application and generating the documentation:
+Generate the OpenAPI documentation:
 
 ```bash
 sudo docker exec -it credit_copilot_app \
 php artisan l5-swagger:generate
 ```
 
-Swagger UI is available at:
+Swagger UI:
 
 ```text
 http://localhost:8001/api/documentation
 ```
 
-The documentation currently includes:
-
-- authentication
-- assessments
-- credit memo generation
-- approval
-- rejection
-- issuing
-
 ---
 
-## Minimal Web UI
+# Quick Start
 
-A minimal Blade interface is included because the assessment focuses on functionality rather than frontend styling.
+## Prerequisites
 
-Implemented screens currently include:
-
-- login
-- loan application list
-- underwriting assessment
-- rule results
-- policy citations
-- credit memo generation
-- Credit Officer approval / rejection
-- issue approved assessment
-
-Policy Q&A UI is currently being completed.
-
-The ingestion UI is still pending.
-
----
-
-## Local Development Setup
-
-### Prerequisites
-
-You only need:
+You need:
 
 - Docker
 - Docker Compose
 - Git
-- a Gemini API key
+- a free Gemini API key
+
+No local PHP, PostgreSQL, or Composer installation is required when using Docker.
 
 ---
 
-### 1. Clone the repository
+## 1. Clone the Repository
 
 ```bash
 git clone <REPOSITORY_URL>
@@ -428,34 +409,60 @@ cd ITI-Credit-Copilot-Lite
 
 ---
 
-### 2. Create the environment file
+## 2. Create the Environment File
 
 ```bash
 cp .env.example .env
 ```
 
-Configure your Gemini API key:
+Update the values required for your environment.
+
+The main project-specific variables are:
 
 ```env
-GEMINI_API_KEY=
-GEMINI_EMBEDDING_MODEL=gemini-embedding-2
-GEMINI_CHAT_MODEL=gemini-3.5-flash-lite
-```
+APP_NAME="ITI Credit Copilot Lite"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8001
 
-The project uses PostgreSQL:
-
-```env
 DB_CONNECTION=pgsql
 DB_HOST=postgres
 DB_PORT=5432
 DB_DATABASE=credit_copilot
 DB_USERNAME=credit_user
 DB_PASSWORD=
+
+GEMINI_API_KEY=
+GEMINI_EMBEDDING_MODEL=gemini-embedding-2
+GEMINI_CHAT_MODEL=gemini-3.5-flash-lite
+
+DEMO_USER_PASSWORD=demo-password
 ```
+
+The complete `.env.example` in the repository is the source of truth for all supported environment variables.
+
+Do not commit `.env` or `.env.testing`.
 
 ---
 
-### 3. Start Docker
+## 3. Get a Free Gemini API Key
+
+1. Open Google AI Studio.
+2. Sign in with a Google account.
+3. Open the API key section.
+4. Create a Gemini API key.
+5. Copy the key into:
+
+```env
+GEMINI_API_KEY=your_key_here
+```
+
+Only use a development/test key. Never commit it to Git.
+
+---
+
+## 4. Start Docker
 
 ```bash
 sudo docker-compose up -d
@@ -463,49 +470,60 @@ sudo docker-compose up -d
 
 ---
 
-### 4. Install PHP dependencies
+## 5. Install Dependencies
 
 ```bash
-sudo docker exec -it credit_copilot_app \
-composer install
+sudo docker exec -it credit_copilot_app composer install
 ```
 
 ---
 
-### 5. Generate Laravel application key
+## 6. Generate the Laravel Application Key
 
 ```bash
-sudo docker exec -it credit_copilot_app \
-php artisan key:generate
+sudo docker exec -it credit_copilot_app php artisan key:generate
 ```
 
 ---
 
-### 6. Run migrations
+## 7. Prepare the Complete Demo Environment
+
+Run one command:
 
 ```bash
-sudo docker exec -it credit_copilot_app \
-php artisan migrate
+sudo docker exec -it credit_copilot_app php artisan demo:setup
+```
+
+`demo:setup` performs:
+
+```text
+migrations
+→ demo-user seeding
+→ policy corpus import
+→ policy ingestion
+→ policy embedding
+```
+
+A verified fresh setup creates:
+
+```text
+Policy editions: 2
+Policy documents: 7
+Policy chunks: 79
+Chunks without embeddings: 0
+Demo users: 3
 ```
 
 ---
 
-### 7. Generate Swagger documentation
+## 8. Generate Swagger Documentation
 
 ```bash
 sudo docker exec -it credit_copilot_app \
 php artisan l5-swagger:generate
 ```
 
----
-
-### Application URL
-
-```text
-http://localhost:8001
-```
-
-Swagger:
+Swagger UI:
 
 ```text
 http://localhost:8001/api/documentation
@@ -513,312 +531,387 @@ http://localhost:8001/api/documentation
 
 ---
 
-## Demo Accounts
+# Demo Accounts
 
-The current development environment uses two main roles:
+The demo setup creates the following synthetic accounts.
+
+### Loan Officer
 
 ```text
-Loan Officer
-Credit Officer
+Email: loan.officer@delta.test
+Password: demo-password
+Role: loan_officer
+Authority limit: 0 EGP
 ```
 
-Demo-user seeding still needs to be finalized before submission so that a fresh clone can reproduce the same accounts automatically.
+### Credit Officer
 
-No real user credentials are committed to this repository.
+```text
+Email: credit.officer@delta.test
+Password: demo-password
+Role: credit_officer
+Authority limit: 250,000 EGP
+```
+
+### Senior Credit Officer
+
+```text
+Email: senior.credit@delta.test
+Password: demo-password
+Role: credit_officer
+Authority limit: 500,000 EGP
+```
+
+The password can be changed through:
+
+```env
+DEMO_USER_PASSWORD=
+```
+
+These are synthetic demo credentials only.
 
 ---
 
-## Testing
+# CLI Workflow
 
-Run the full test suite:
+The project uses an Artisan CLI as the minimal interaction surface required by the assessment.
+
+Main commands include:
+
+```text
+demo:import-corpus
+demo:setup
+
+policy:ingest
+policy:embed
+policy:search
+policy:ask
+
+application:process
+application:assess
+application:memo
+
+assessment:approve
+assessment:reject
+assessment:issue
+
+evaluation:run
+```
+
+Examples:
+
+```bash
+sudo docker exec -it credit_copilot_app php artisan policy:ingest
+```
+
+```bash
+sudo docker exec -it credit_copilot_app php artisan policy:embed
+```
 
 ```bash
 sudo docker exec -it credit_copilot_app \
-php artisan test
+php artisan policy:ask "What is the maximum DBR?" 2025-04-03
+```
+
+Use `php artisan help <command>` for the exact arguments/options of any command.
+
+---
+
+# Testing
+
+Run the automated test suite:
+
+```bash
+sudo docker exec -it credit_copilot_app php artisan test
 ```
 
 Run code-style validation:
 
 ```bash
-sudo docker exec -it credit_copilot_app \
-./vendor/bin/pint --test
+sudo docker exec -it credit_copilot_app ./vendor/bin/pint --test
 ```
 
-Previously verified backend test suite:
+Pipeline/unit tests should not require an internet connection or API key where fake LLM implementations are used.
+
+---
+
+# Evaluation
+
+Run the evaluation harness:
+
+```bash
+sudo docker exec -it credit_copilot_app php artisan evaluation:run
+```
+
+The current harness contains 15 cases covering:
+
+- policy retrieval
+- out-of-corpus refusal
+- policy-edition-sensitive retrieval
+- deterministic calculations
+- prompt injection
+- prompt injection hidden inside an applicant document
+
+## Baseline
+
+With similarity threshold `0.73`:
 
 ```text
-43 tests passed
-89 assertions
+Retrieval hit-rate:          100%
+Refusal correctness:          66.67%
+Calculation exactness:       100%
+Prompt injection protection: 100%
 ```
 
-The test count may increase as the remaining UI, fairness, integration, and evaluation tests are completed.
+The cryptocurrency-backed-loan question incorrectly retrieved an unrelated generic policy clause with similarity `0.7386`.
 
-Existing automated coverage includes:
+## After Improvement
 
-- loan calculations
-- DBR edge cases
-- maximum eligible amount
-- age at maturity
-- underwriting rules
-- assessment APIs
-- API authentication
-- RBAC
-- Credit Officer authority limits
-- approval
-- rejection
-- issue lifecycle
-- grounded credit memo values
-- rejection of LLM-generated numbers
+The threshold was increased to `0.74`.
+
+Current result:
+
+```text
+Retrieval hit-rate:          100%
+Refusal correctness:         100%
+Calculation exactness:       100%
+Prompt injection protection: 100%
+```
+
+See [`docs/EVALUATION.md`](docs/EVALUATION.md) for the detailed cases and failure analysis.
 
 ---
 
-## CI
+# What Is Sent to the LLM
 
-GitHub Actions runs:
-
-- Laravel Pint
-- automated tests
-
-on Pull Requests.
-
-The project should only be submitted with CI green on `main`.
-
----
-
-## Security
-
-Security controls currently include:
-
-- environment-based secrets
-- `.env` excluded from Git
-- server-side role validation
-- server-side approval limits
-- policy/application trust separation
-- protected attribute removal
-- grounded LLM prompts
-- citation validation
-- deterministic numeric calculations
-- synthetic data only
-
-Before final submission, the following security checks will also be completed:
-
-- full Git history secret scan
-- final phone-number / national-ID masking verification
-- upload type and size validation if document upload is exposed through the UI
-
-No API keys or production credentials should exist in the repository or Git history.
-
----
-
-## What Is Sent to the LLM
-
-The LLM receives only the information required for the relevant operation.
-
-### Policy Q&A
+## Policy Q&A
 
 The LLM receives:
 
-- the user question
+- the user's policy question
 - retrieved trusted policy evidence
-- citation identifiers
+- evidence/citation identifiers
 
-It is instructed not to follow instructions contained inside retrieved document text.
+The model is instructed to answer only from that evidence.
 
-### Application Processing
+## Application Extraction
 
-Application documents are treated as untrusted input.
+The LLM receives sanitized application text after application code:
 
-Protected attributes are removed before underwriting processing.
+- removes gender
+- removes religion
+- removes marital status
+- removes nationality
+- masks national ID
+- masks phone number
+- masks applicant name
 
-### Credit Memo
+Application text is explicitly treated as untrusted data.
 
-The LLM receives rule outcomes and placeholders.
+The LLM returns structured fields plus supporting quotes, and application code verifies that the cited evidence exists in the sanitized document.
 
-Numeric values are inserted into the final memo by application code rather than generated by the LLM.
+## Credit Memo
+
+The LLM receives:
+
+- verified application facts
+- rule outcomes
+- policy citations
+- controlled placeholders
+
+Financial calculations are performed by PHP code, not by the LLM.
 
 ---
 
-## Evaluation
+# 5-Minute Demo Path
 
-The assessment requires a dedicated evaluation set containing at least 15 cases.
+Use this sequence for a quick review of the core capabilities.
 
-The final evaluation harness will cover:
+1. **Start the environment**
 
-- at least 3 out-of-corpus questions
-- at least 2 policy-edition comparison cases
-- at least 3 deterministic calculation cases
-- at least 2 prompt-injection cases
-- at least 1 prompt injection hidden inside an applicant document
+   ```bash
+   sudo docker-compose up -d
+   ```
 
-The harness must report:
+2. **Prepare all demo data**
+
+   ```bash
+   sudo docker exec -it credit_copilot_app php artisan demo:setup
+   ```
+
+3. **Show a supported policy question with citations**
+
+   ```bash
+   sudo docker exec -it credit_copilot_app \
+   php artisan policy:ask "What is the maximum DBR?" 2025-04-03
+   ```
+
+4. **Show a correct out-of-corpus refusal**
+
+   Ask about a policy that is not present in the supplied documents, such as cryptocurrency-backed loans.
+
+   Expected behavior:
+
+   ```text
+   The documents do not contain enough information.
+   ```
+
+5. **Show a policy-edition difference**
+
+   Ask the DBR question using a 2024 date and then a 2025 date.
+
+   Expected difference:
+
+   ```text
+   2024: 50%
+   2025: 45%
+   ```
+
+6. **Process and assess a synthetic application**
+
+   Use the application-processing and assessment CLI commands for one of the provided application packs.
+
+7. **Show deterministic calculations**
+
+   Demonstrate that installment, DBR, maximum eligible amount, and rule results come from application code.
+
+8. **Show prompt-injection protection**
+
+   Process the malicious application pack containing an embedded instruction.
+
+   Expected behavior: the suspicious document is blocked / referred for human review rather than following the embedded instruction.
+
+9. **Show authority-limit enforcement**
+
+   Attempt to approve a 300,000 EGP recommendation using:
+
+   ```text
+   credit.officer@delta.test
+   ```
+
+   with a 250,000 EGP authority limit.
+
+   Expected behavior: the server rejects the approval.
+
+10. **Approve using the higher-authority Credit Officer**
+
+    Use:
+
+    ```text
+    senior.credit@delta.test
+    ```
+
+    then issue the approved assessment.
+
+---
+
+# Security
+
+Implemented controls include:
+
+- synthetic data only
+- environment-based secrets
+- `.env` excluded from Git
+- applicant documents treated as untrusted
+- prompt-injection detection
+- protected-attribute removal
+- national-ID masking
+- phone-number masking
+- applicant-name masking
+- evidence-quote verification
+- deterministic financial calculations
+- server-side RBAC
+- server-side authority-limit enforcement
+- policy/application trust separation
+- citation validation
+- LLM-output validation
+
+Before final submission, a Git-history secret scan should be run.
+
+---
+
+# Known Limitations / Remaining Work
+
+The following items are intentionally documented rather than presented as complete:
+
+- full FR-9 request/step/token logging is not fully implemented
+- fairness test still needs final verification if not already completed
+- ingestion + retrieval integration test should be confirmed before submission
+- final secret-history scan must be run before making the submission final
+- no polished web UI; the required minimal interaction surface is provided through the CLI
+
+---
+
+# Documentation
+
+Project documentation:
 
 ```text
-Retrieval hit-rate
-Refusal correctness
-Calculation exactness
+docs/DESIGN.md
+docs/EVALUATION.md
+docs/AI-USAGE-LOG.md
 ```
 
-Actual results, including failures, will be recorded before final submission.
-
-**Status:** evaluation harness still pending.
-
----
-
-## Observability and Audit Logging
-
-Assessment records already include a unique run identifier.
-
-The final logging requirement must include:
-
-- request ID
-- pipeline steps executed
-- retrieved policy chunk IDs
-- selected policy edition
-- protected fields removed
-- LLM token usage
-
-**Status:** full FR-9 logging is not yet complete.
+- `DESIGN.md` explains architecture, trust boundaries, provider abstraction, chunking, calculations, approval flow, and known limitations.
+- `EVALUATION.md` records the real evaluation cases, baseline failure, and improved results.
+- `AI-USAGE-LOG.md` documents how AI tools were used, what was implemented and verified manually, and cases where AI guidance was wrong or incomplete.
 
 ---
 
-## Current Requirement Status
+# AI Usage
 
-| Requirement | Status |
-|---|---|
-| Policy ingestion | Implemented |
-| Semantic retrieval | Implemented |
-| Grounded citations | Implemented |
-| Insufficient-evidence refusal | Implemented |
-| Policy edition selection | Implemented |
-| Application processing | Implemented |
-| Deterministic calculations | Implemented |
-| Underwriting rules | Implemented |
-| Credit memo | Implemented |
-| Human approval | Implemented |
-| Authority limit enforcement | Implemented |
-| Authentication | Implemented |
-| Role-based access | Implemented |
-| REST API | Implemented |
-| OpenAPI / Swagger | Implemented |
-| Minimal assessment UI | Implemented |
-| Policy Q&A UI | In progress |
-| Ingestion UI | Pending |
-| 15-case evaluation harness | Pending |
-| Fairness automated test | Pending final verification |
-| Ingestion + retrieval integration test | Pending |
-| Full audit / token logging | Pending |
-| Secret-history scan | Pending |
-| Final demo video | Pending |
-
----
-
-## Git Workflow
-
-Development is performed using feature branches and Pull Requests.
-
-Pull Requests describe:
-
-```text
-What
-Why
-Testing
-```
-
-GitHub Actions verify formatting and tests before merge.
-
----
-
-## Environment and Secrets
-
-Secrets must never be committed.
-
-The following files are intentionally excluded from Git:
-
-```text
-.env
-.env.testing
-```
-
-The repository contains only:
-
-```text
-.env.example
-```
-
-with empty secret values.
-
----
-
-## AI Usage
-
-AI tools are allowed for this assessment.
-
-AI assistance has been used during development for:
+AI tools were used as development assistants for:
 
 - understanding requirements
 - discussing architecture
+- troubleshooting
 - reviewing implementation ideas
-- troubleshooting Laravel / Docker issues
-- generating test ideas
-- improving documentation
+- suggesting tests
+- drafting documentation
 
-All generated suggestions are reviewed and verified against:
+AI output was reviewed against:
 
-- the project requirements
-- application behavior
+- the assessment brief
+- actual application behavior
+- deterministic calculations
 - automated tests
-- manual testing
+- database state
+- evaluation results
 
-A more detailed AI usage log will be included before final submission.
-
----
-
-## Known Remaining Work
-
-Before final submission:
-
-1. Complete Policy Q&A UI.
-2. Add minimal policy ingestion UI.
-3. Implement the 15-case evaluation harness.
-4. Add / verify fairness testing.
-5. Add ingestion + retrieval integration testing.
-6. Complete request and assessment audit logging.
-7. Verify phone and national-ID masking before LLM calls.
-8. Run a full Git history secret scan.
-9. Finalize reproducible demo users / seed data.
-10. Complete `DESIGN.md`.
-11. Update this README with final test and evaluation results.
-12. Clone the repository from scratch and verify setup instructions.
-13. Record and verify the final demo video.
+See [`docs/AI-USAGE-LOG.md`](docs/AI-USAGE-LOG.md).
 
 ---
 
-## Submission Checklist
+# CI
 
-Before submitting:
+GitHub Actions runs formatting/lint checks and automated tests on Pull Requests.
+
+The project should be submitted only with CI green on `main`.
+
+---
+
+# Submission Checklist
+
+Before submission:
 
 ```text
 [ ] Repository is public
 [ ] CI is green on main
-[ ] Fresh clone works using README instructions
+[ ] Fresh clone works using this README
 [ ] No secrets exist in Git history
-[ ] All synthetic documents are included
-[ ] Evaluation harness is complete
+[ ] Synthetic documents are included
+[ ] Evaluation harness passes
 [ ] Evaluation results are documented
-[ ] DESIGN.md is complete
-[ ] README matches actual implementation
-[ ] Demo link works in a private browser
+[ ] docs/DESIGN.md is complete
+[ ] docs/EVALUATION.md is complete
+[ ] docs/AI-USAGE-LOG.md is complete
+[ ] Demo video is 3–5 minutes
+[ ] Demo video link works in a private browser window
 ```
 
 ---
 
-## License
-
-A project license should be included before final submission.
-
----
-
-## Disclaimer
+# Disclaimer
 
 This project is a technical assessment built entirely with synthetic data.
 
